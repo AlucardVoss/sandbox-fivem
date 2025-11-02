@@ -503,6 +503,18 @@ exports("OwnedGetVIN", function(VIN, cb)
             local success, properties = pcall(json.decode, vehicle.Properties)
             if success and properties then
                 vehicle.Properties = properties
+                
+                if properties.GovAssigned then
+                    if type(properties.GovAssigned) == 'string' then
+                        local govSuccess, govAssigned = pcall(json.decode, properties.GovAssigned)
+                        if govSuccess and govAssigned then
+                            vehicle.GovAssigned = govAssigned
+                        end
+                    elseif type(properties.GovAssigned) == 'table' then
+                        vehicle.GovAssigned = properties.GovAssigned
+                    end
+                end
+
             end
         end
 
@@ -638,6 +650,18 @@ exports("OwnedGetAll",
                         local success, properties = pcall(json.decode, v.Properties)
                         if success and properties then
                             v.Properties = properties
+                            
+                            if properties.GovAssigned then
+                                if type(properties.GovAssigned) == 'string' then
+                                    local govSuccess, govAssigned = pcall(json.decode, properties.GovAssigned)
+                                    if govSuccess and govAssigned then
+                                        v.GovAssigned = govAssigned
+                                    end
+                                elseif type(properties.GovAssigned) == 'table' then
+                                    v.GovAssigned = properties.GovAssigned
+                                end
+                            end
+
                         end
                     end
 
