@@ -2162,7 +2162,7 @@ CREATE TABLE IF NOT EXISTS `vehicles` (
   `Value` int(11) DEFAULT 0,
   `Class` varchar(10) DEFAULT 'Unknown',
   `Vehicle` int(11) DEFAULT 0,
-  `FakePlate` boolean DEFAULT FALSE,
+  `FakePlate` varchar(10) NOT NULL DEFAULT '',
   `Damage` json DEFAULT NULL,
   `DamagedParts` json DEFAULT NULL,
   `Polish` json DEFAULT NULL,
