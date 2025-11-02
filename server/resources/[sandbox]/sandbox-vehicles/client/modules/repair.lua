@@ -41,7 +41,7 @@ exports("RepairKit", function(veh, type)
 		local driverPed = GetPedInVehicleSeat(veh, -1)
 		if driverPed == 0 or driverPed == GLOBAL_PED then
 			local timeout = false
-			SetTimeout(2000, function()
+			Citizen.SetTimeout(2000, function()
 				timeout = true
 			end)
 
@@ -171,7 +171,7 @@ exports("RepairPart", function(veh, part, repairAmount)
 		local driverPed = GetPedInVehicleSeat(veh, -1)
 		if driverPed == 0 or driverPed == GLOBAL_PED then
 			local timeout = false
-			SetTimeout(2000, function()
+			Citizen.SetTimeout(2000, function()
 				timeout = true
 			end)
 
@@ -242,7 +242,7 @@ AddEventHandler("Vehicles:Client:StartUp", function()
 	exports["sandbox-base"]:RegisterClientCallback("Vehicles:RepairKit", function(type, cb)
 		if LocalPlayer.state.loggedIn then
 			local coords = GetEntityCoords(PlayerPedId())
-			local maxDistance = 2.0
+			local maxDistance = 5.0
 			local includePlayerVehicle = false
 
 			local vehicle = lib.getClosestVehicle(coords, maxDistance, includePlayerVehicle)

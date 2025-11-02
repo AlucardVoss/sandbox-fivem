@@ -1,6 +1,6 @@
 function RegisterItemUses()
 	exports.ox_inventory:RegisterUse("lockpick", "Vehicles", function(source, slot, itemData)
-		SetTimeout(500, function()
+		Citizen.SetTimeout(500, function()
 			exports["sandbox-base"]:ClientCallback(source, "Vehicles:Lockpick", true, function(using, success)
 				if using then
 					local newValue = slot.CreateDate - (60 * 60 * 24)
@@ -18,7 +18,7 @@ function RegisterItemUses()
 	end)
 
 	exports.ox_inventory:RegisterUse("adv_lockpick", "Vehicles", function(source, slot, itemData)
-		SetTimeout(500, function()
+		Citizen.SetTimeout(500, function()
 			exports["sandbox-base"]:ClientCallback(source, "Vehicles:AdvLockpick", true, function(using, success)
 				if using then
 					local newValue = slot.CreateDate - (60 * 60 * 24)
@@ -36,7 +36,7 @@ function RegisterItemUses()
 	end)
 
 	exports.ox_inventory:RegisterUse("electronics_kit", "Vehicles", function(source, slot, itemData)
-		SetTimeout(500, function()
+		Citizen.SetTimeout(500, function()
 			exports["sandbox-base"]:ClientCallback(source, "Vehicles:Hack", true, function(using, success)
 				if using then
 					local newValue = slot.CreateDate - (60 * 60 * 24)
@@ -54,7 +54,7 @@ function RegisterItemUses()
 	end)
 
 	exports.ox_inventory:RegisterUse("adv_electronics_kit", "Vehicles", function(source, slot, itemData)
-		SetTimeout(500, function()
+		Citizen.SetTimeout(500, function()
 			exports["sandbox-base"]:ClientCallback(source, "Vehicles:AdvHack", true, function(using, success)
 				if using then
 					local newValue = slot.CreateDate - (60 * 60 * 24)
@@ -72,7 +72,7 @@ function RegisterItemUses()
 	end)
 
 	exports.ox_inventory:RegisterUse("screwdriver", "Vehicles", function(source, slot, itemData)
-		SetTimeout(1500, function()
+		Citizen.SetTimeout(1500, function()
 			exports["sandbox-base"]:ClientCallback(source, "Vehicles:Lockpick", {
 				{
 					base = 4000,
@@ -100,60 +100,62 @@ function RegisterItemUses()
 		end)
 	end)
 
-	exports.ox_inventory:RegisterUse("repairkit", "Vehicles", function(source, itemData)
+	exports.ox_inventory:RegisterUse("repairkit", "Vehicles", function(source, slot, itemData)
 		exports["sandbox-base"]:ClientCallback(source, "Vehicles:RepairKit", false, function(success)
 			if success then
-				exports.ox_inventory:RemoveSlot(itemData.Owner, itemData.Name, 1, itemData.Slot, itemData
-					.invType)
+				exports.ox_inventory:RemoveSlot(slot.Owner, slot.Name, 1, slot.Slot, slot.invType)
 			end
 		end)
 	end)
 
-	exports.ox_inventory:RegisterUse("repairkitadv", "Vehicles", function(source, itemData)
+	exports.ox_inventory:RegisterUse("repairkitadv", "Vehicles", function(source, slot, itemData)
 		exports["sandbox-base"]:ClientCallback(source, "Vehicles:RepairKit", true, function(success)
 			if success then
-				exports.ox_inventory:RemoveSlot(itemData.Owner, itemData.Name, 1, itemData.Slot, itemData
-					.invType)
+			exports.ox_inventory:RemoveSlot(slot.Owner, slot.Name, 1, slot.Slot, slot.invType)
 			end
 		end)
 	end)
 
-	exports.ox_inventory:RegisterUse("fakeplates", "Vehicles", function(source, itemData)
-		local currentMeta = itemData.MetaData or {}
+	exports.ox_inventory:RegisterUse("fakeplates", "Vehicles", function(source, slot, itemData)
+		local currentMeta = slot.MetaData or {}
 		if not currentMeta.Plate then -- Data needs generating
-			local updatingMetaData = {}
-
-			updatingMetaData.Plate = Vehicles.Identification.Plate:Generate(true)
-			updatingMetaData.VIN = Vehicles.Identification.VIN:GenerateLocal() -- Might not be completely unique but odds are low and idc
-			updatingMetaData.OwnerName = exports['sandbox-base']:GeneratorNameFirst() ..
-				" " .. exports['sandbox-base']:GeneratorNameLast()
-			updatingMetaData.SID = exports['sandbox-base']:SequenceGet("Character")
-			updatingMetaData.Vehicle = exports['sandbox-vehicles']:RandomName()
-
-			currentMeta = exports.ox_inventory:UpdateMetaData(itemData.id, updatingMetaData)
+			local updatingMetaData = {
+				Plate = exports['sandbox-vehicles']:PlateGenerate(true),
+				VIN = exports['sandbox-vehicles']:VINGenerateLocal(), -- Might not be completely unique but odds are low and idc
+				OwnerName = exports['sandbox-base']:GeneratorNameFirst() ..
+					" " .. exports['sandbox-base']:GeneratorNameLast(),
+				SID = exports['sandbox-base']:SequenceGet("Character"),
+				Vehicle = exports['sandbox-vehicles']:RandomName(),
+			}
+			currentMeta = exports.ox_inventory:UpdateMetaData(source, slot.Slot, updatingMetaData)
 		end
 
 		if not currentMeta.Vehicle then
 			currentMeta.Vehicle = exports['sandbox-vehicles']:RandomName()
 
-			exports.ox_inventory:UpdateMetaData(iitemData.id, {
+			exports.ox_inventory:UpdateMetaData(source, slot.id, {
 				Vehicle = currentMeta.Vehicle
 			})
 		end
 
 		if currentMeta then
 			exports["sandbox-base"]:ClientCallback(source, "Vehicles:GetFakePlateAddingVehicle", {}, function(veh)
+				print(veh)
 				if not veh then
 					return
 				end
 				veh = NetworkGetEntityFromNetworkId(veh)
+				print(veh)
 				if veh and DoesEntityExist(veh) then
+					print("Vehicle found")
 					local vehState = Entity(veh).state
+					print(vehState)
 					if not vehState.VIN then
 						return
 					end
 
 					local vehicle = exports['sandbox-vehicles']:OwnedGetActive(vehState.VIN)
+					print(vehicle)
 					if not vehicle then
 						return
 					end
@@ -166,8 +168,8 @@ function RegisterItemUses()
 
 						exports['sandbox-vehicles']:OwnedForceSave(vehState.VIN)
 
-						exports.ox_inventory:RemoveSlot(itemData.Owner, itemData.Name, 1, itemData.Slot,
-							itemData.invType)
+						exports.ox_inventory:RemoveSlot(slot.Owner, slot.Name, 1, slot.Slot,
+							slot.invType)
 
 						exports['sandbox-hud']:Notification(source, "success", "Fake Plate Installed")
 					else
@@ -284,6 +286,16 @@ end
 RegisterNetEvent('ox_inventory:ready', function()
 	if GetResourceState(GetCurrentResourceName()) == 'started' then
 		RegisterItemUses()
+	end
+end)
+
+-- Also try to register on resource start in case ox_inventory is already ready
+AddEventHandler('onResourceStart', function(resourceName)
+	if resourceName == GetCurrentResourceName() then
+		Wait(2000) -- Wait for ox_inventory to be ready
+		if GetResourceState('ox_inventory') == 'started' then
+			RegisterItemUses()
+		end
 	end
 end)
 
