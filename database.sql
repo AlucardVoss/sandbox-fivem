@@ -350,6 +350,7 @@ CREATE TABLE IF NOT EXISTS `characters` (
   `Inventory` longtext DEFAULT NULL,
   `CasinoChips` LONGTEXT DEFAULT NULL,
   `LSUNDGInviter` JSON DEFAULT NULL,
+  `LSUNDGBan` JSON DEFAULT NULL
   PRIMARY KEY (`SID`) USING BTREE,
   CONSTRAINT `Origin` CHECK (json_valid(`Origin`)),
   CONSTRAINT `Apps` CHECK (json_valid(`Apps`)),
