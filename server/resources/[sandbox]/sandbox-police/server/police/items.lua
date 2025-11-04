@@ -4,8 +4,12 @@ function PoliceItems()
         if pState.onDuty == "police" then
             exports["sandbox-base"]:ClientCallback(source, "Police:DoDetCord", {}, function(s, doorId)
                 if s and exports.ox_inventory:RemoveSlot(slot.Owner, slot.Name, 1, slot.Slot, 1) then
-                    exports['sandbox-doors']:SetLock(doorId, false)
-                    exports['sandbox-doors']:DisableDoor(doorId, 60 * 60)
+                    -- Use ox_doorlock to unlock the door
+                    TriggerEvent('ox_doorlock:setState', doorId, false, source)
+                    -- Add a timeout to re-lock the door after 1 hour (60 minutes)
+                    SetTimeout(60 * 60 * 1000, function()
+                        TriggerEvent('ox_doorlock:setState', doorId, true, source)
+                    end)
                 end
             end)
         end
