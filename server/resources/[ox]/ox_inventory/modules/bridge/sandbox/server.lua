@@ -762,12 +762,9 @@ function BuildMetaDataTable(cData, item, existing)
         MetaData.metadata = updatingMetaData
     
         MetaData.description = string.format(
-            "Fake Plate\nOwner: %s | SID: %d | Plate: %s | VIN: %s | Vehicle: %s",
+            "Fake Plate\nOwner: %s  | Plate: %s",
             updatingMetaData.OwnerName,
-            updatingMetaData.SID,
-            updatingMetaData.Plate,
-            updatingMetaData.VIN,
-            updatingMetaData.Vehicle
+            updatingMetaData.Plate
         )
     end
 
