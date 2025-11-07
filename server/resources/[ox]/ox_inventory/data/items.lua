@@ -27,6 +27,11 @@
         duration: number             -- Duration in seconds
         cooldown: number             -- Cooldown in seconds
         skipScreenEffects: boolean   -- Skip screen effects
+    progressModifier?: table        -- Progress bar modifier configuration
+        modifier: number             -- Progress bar speed modifier (percentage)
+        min: number                  -- Minimum progress time in seconds
+        max: number                  -- Maximum progress time in seconds
+    ===========================================
     container?: table               -- Container configuration
         slots: number               -- Number of slots
         maxWeight: number            -- Maximum weight in grams
@@ -711,7 +716,12 @@ return {
                 sprint = false,
             },
         },
-        server = {}
+        server = {},
+        progressModifier = {
+			modifier = 50,
+			min = 6,
+			max = 10,
+		},
     },
     ["beanmachine"] = {
         label = "The Bean Machine",
@@ -739,7 +749,12 @@ return {
                 sprint = false,
             },
         },
-        server = {}
+        server = {},
+        progressModifier = {
+			modifier = 40,
+			min = 3,
+			max = 6,
+		},
     },
     ["hornys_cup"] = {
         label = "H Cup",
@@ -810,7 +825,12 @@ return {
                 sprint = false,
             },
         },
-        server = {}
+        server = {},
+        progressModifier = {
+			modifier = 40,
+			min = 3,
+			max = 6,
+		},
     },
     ["japanese_pan_noodles"] = {
         label = "Japanese Pan Noodles",
@@ -2884,7 +2904,12 @@ return {
                 sprint = false,
             },
         },
-        server = {}
+        server = {},
+        progressModifier = {
+			modifier = 40,
+			min = 6,
+			max = 10,
+		}
     },
     ["donut_stack"] = {
         label = "Stack of Donuts",
@@ -5325,7 +5350,12 @@ return {
                 sprint = false,
             },
         },
-        server = {}
+        server = {},
+		progressModifier = {
+			modifier = 70,
+			min = 2,
+			max = 4,
+		},
     },
     ["salad"] = {
         label = "Salad",
@@ -5936,7 +5966,12 @@ return {
                 sprint = false,
             },
         },
-        server = {}
+        server = {},
+        progressModifier = {
+			modifier = 40,
+			min = 6,
+			max = 10,
+		},
     },
     ["tommy_tea"] = {
         label = "Tommy Tea",
@@ -5957,7 +5992,12 @@ return {
                 sprint = false,
             },
         },
-        server = {}
+        server = {},
+        progressModifier = {
+			modifier = 60,
+			min = 2,
+			max = 4,
+		},
     },
     ["rusty_empty"] = {
         label = "Empty Donut Box",
@@ -6802,7 +6842,12 @@ return {
                 sprint = false,
             },
         },
-        server = {}
+        server = {},
+        progressModifier = {
+			modifier = 60,
+			min = 2,
+			max = 4,
+		},
     },
     ["mochi_blue"] = {
         label = "Blueberry Mochi",
@@ -6858,7 +6903,12 @@ return {
                 sprint = false,
             },
         },
-        server = {}
+        server = {},
+        progressModifier = {
+			modifier = 50,
+			min = 1,
+			max = 2,
+		},
     },
     ["iced_coffee"] = {
         label = "Iced Coffee",
@@ -6879,7 +6929,12 @@ return {
                 sprint = false,
             },
         },
-        server = {}
+        server = {},
+        progressModifier = {
+			modifier = 40,
+			min = 4,
+			max = 8,
+		},
     },
     ['matcha_latte'] = {
         label = "Matcha Latte",
@@ -6900,7 +6955,12 @@ return {
                 sprint = false,
             },
         },
-        server = {}
+        server = {},
+        progressModifier = {
+			modifier = 60,
+			min = 3,
+			max = 6,
+		},
     },
     ["blueberry_boba"] = {
         label = "Blueberry Boba",
@@ -6942,7 +7002,12 @@ return {
                 sprint = false,
             },
         },
-        server = {}
+        server = {},
+        progressModifier = {
+			modifier = 60,
+			min = 3,
+			max = 6,
+		},
     },
     ["cat_tuccino"] = {
         label = "Cat Tuccino",
@@ -6963,7 +7028,12 @@ return {
                 sprint = false,
             },
         },
-        server = {}
+        server = {},
+        progressModifier = {
+			modifier = 40,
+			min = 6,
+			max = 10,
+		},
     },
     ["frozen_yoghurt"] = {
         label = "Frozen Yoghurt",

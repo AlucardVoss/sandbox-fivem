@@ -1552,7 +1552,6 @@ CreateThread(function()
                 end
             end)
         end
-
         if itemData.drugState then
             exports.ox_inventory:RegisterUse(name, "DrugStates", function(source, item)
                 local char = exports['sandbox-characters']:FetchCharacterSource(source)
@@ -1566,7 +1565,6 @@ CreateThread(function()
                 end
             end)
         end
-
         if itemData.energyModifier then
             exports.ox_inventory:RegisterUse(name, "EnergyModifier", function(source, item)
                 TriggerClientEvent(
@@ -1579,8 +1577,35 @@ CreateThread(function()
                 )
             end)
         end
+        if itemData.progressModifier then
+            exports.ox_inventory:RegisterUse(name, "ProgressModifier", function(source, item)
+                local modifier = itemData.progressModifier.modifier or 0
+                local duration = math.random(itemData.progressModifier.min or 1, itemData.progressModifier.max or 1) * 60 * 1000
+                TriggerClientEvent("Inventory:Client:ProgressModifier", source, modifier, duration)
+            end)
+        end
+        if itemData.healthModifier then
+            exports.ox_inventory:RegisterUse(name, "HealthModifier", function(source, item)
+                TriggerClientEvent("Inventory:Client:HealthModifier", source, itemData.healthModifier)
+            end)
+        end
+        if itemData.armourModifier then
+            exports.ox_inventory:RegisterUse(name, "ArmourModifier", function(source, item)
+                TriggerClientEvent("Inventory:Client:ArmourModifier", source, itemData.armourModifier)
+            end)
+        end
+        if itemData.stressTicks then
+            exports.ox_inventory:RegisterUse(name, "StressTicks", function(source, item)
+                local char = exports['sandbox-characters']:FetchCharacterSource(source)
+                if char then
+                    char.state.stressTicks = itemData.stressTicks
+                    TriggerClientEvent("Status:Client:Ticks:Stress", source)
+                end
+            end)
+        end
     end
 end)
+
 
 RegisterNetEvent('Inventory:ClearGangChain', function()
     local src = source
