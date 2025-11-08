@@ -166,7 +166,7 @@ end)
 exports('MoonshineStillCreatePlaced', function(stillId, owner, tier, coords, heading, created)
     local itemInfo = exports.ox_inventory:ItemsGetData("moonshine_still")
     local stillData = exports['sandbox-drugs']:MoonshineStillGet(stillId)
-    
+
     -- Check if still is already placed (in database)
     local isPlaced = exports['sandbox-drugs']:MoonshineStillIsPlaced(stillId)
     
@@ -222,16 +222,16 @@ exports('MoonshineStillCreatePlaced', function(stillId, owner, tier, coords, hea
         _lastAlertTime[stillId] = nil
         
         -- Insert new record (fresh placement)
-        MySQL.insert.await(
-            "INSERT INTO placed_moonshine_stills (still_id, owner, placed, expires, coords, heading) VALUES(?, ?, ?, ?, ?, ?)",
-            {
-                stillId,
-                owner,
-                os.time(),
-                created + itemInfo.durability,
-                json.encode(coords),
-                heading,
-            })
+    MySQL.insert.await(
+        "INSERT INTO placed_moonshine_stills (still_id, owner, placed, expires, coords, heading) VALUES(?, ?, ?, ?, ?, ?)",
+        {
+            stillId,
+            owner,
+            os.time(),
+            created + itemInfo.durability,
+            json.encode(coords),
+            heading,
+        })
     end
 
     -- Create/update state for this still - each still ID is completely independent
@@ -381,11 +381,17 @@ AddEventHandler("Drugs:Server:Startup", function()
         { label = "Grandmaster", value = 10000 },
     }, false)
     
-    exports['sandbox-pedinteraction']:VendorCreate("MoonshineSeller", "ped", "Karen", `S_F_Y_Bartender_01`, {
+    -- Remove old vendor if it exists
+    exports['sandbox-pedinteraction']:VendorRemove("MoonshineSeller")
+    
+    -- Create Moonshine Dealer Ped (custom interaction, not vendor)
+    TriggerClientEvent("Drugs:Client:Moonshine:CreateDealer", -1, {
+        id = "MoonshineDealer",
+        model = `S_M_Y_Dealer_01`,
         coords = vector3(755.504, -1860.620, 48.292),
         heading = 307.963,
         scenario = "WORLD_HUMAN_SMOKING"
-    }, _toolsForSale, "fas fa-jar", "View Offers", false, false, true)
+    })
 
     local stills = MySQL.query.await('SELECT * FROM placed_moonshine_stills WHERE expires > ?', { os.time() })
     for k, v in ipairs(stills) do
@@ -394,7 +400,7 @@ AddEventHandler("Drugs:Server:Startup", function()
 
             if stillData ~= nil then
                 local coords = json.decode(v.coords)
-                
+
                 -- Validate cooldown - clear if expired
                 local cooldown = nil
                 if stillData.cooldown and os.time() < stillData.cooldown then
@@ -483,10 +489,10 @@ AddEventHandler("Drugs:Server:Startup", function()
                 
                 if stillData and exports.ox_inventory:RemoveItem(source, "moonshine_still", 1, md) then
                     exports['sandbox-drugs']:MoonshineStillCreatePlaced(stillId, char:GetData("SID"),
-                        stillData.tier,
-                        data.endCoords.coords, data.endCoords.rotation, stillData.created)
-                    exports['sandbox-drugs']:ClearPlacementData(source)
-                    cb(true)
+                            stillData.tier,
+                            data.endCoords.coords, data.endCoords.rotation, stillData.created)
+                        exports['sandbox-drugs']:ClearPlacementData(source)
+                        cb(true)
                 else
                     cb(false)
                 end
@@ -573,22 +579,22 @@ AddEventHandler("Drugs:Server:Startup", function()
         end
         
         -- Still is ready, proceed with cooking
-        local stillData = exports['sandbox-drugs']:MoonshineStillGet(data.stillId)
+                    local stillData = exports['sandbox-drugs']:MoonshineStillGet(data.stillId)
         local still = _placedStills[data.stillId]
         
         -- Get recipe
         local recipe = GetRecipeById(data.recipeId or "classic")
         if not recipe then
             exports['sandbox-hud']:Notification(source, "error", "Invalid recipe")
-            cb(false)
+                    cb(false)
             return
-        end
+                end
         
         -- Check if recipe is unlocked
         if not CheckRecipeUnlocked(source, recipe.id) then
             exports['sandbox-hud']:Notification(source, "error", 
                 string.format("Recipe locked! Need %d reputation", _reputationSystem.unlockRecipes[recipe.id]))
-            cb(false)
+                cb(false)
             return
         end
         
@@ -887,7 +893,7 @@ AddEventHandler("Drugs:Server:Startup", function()
             return
         end
         
-        local sid = char:GetData("SID")
+            local sid = char:GetData("SID")
         if not data or _placedBarrels[data] == nil then
             exports['sandbox-hud']:Notification(source, "error", "Barrel not found")
             cb(false)
@@ -936,16 +942,16 @@ AddEventHandler("Drugs:Server:Startup", function()
         }
         
         if exports.ox_inventory:AddItem(sid, "moonshine", requiredJars, moonshineMetadata, 1, false, false, false, false, false, false, quality) then
-            exports['sandbox-drugs']:MoonshineBarrelRemovePlaced(data)
+                                exports['sandbox-drugs']:MoonshineBarrelRemovePlaced(data)
             exports['sandbox-hud']:Notification(source, "success",
                 string.format("Filled %s jars with %s! Quality: %d/100", requiredJars, recipeLabel, quality))
             cb(true)
-        else
+                            else
             exports['sandbox-hud']:Notification(source, "error", "Failed to add moonshine to inventory")
             -- Try to give jars back
             exports.ox_inventory:AddItem(sid, "moonshine_jar", requiredJars, {}, 1, false, false, false, false, false, false)
-            cb(false)
-        end
+                                cb(false)
+                            end
     end)
 
     -- Get Available Recipes
@@ -970,9 +976,9 @@ AddEventHandler("Drugs:Server:Startup", function()
             end
             
             cb({ recipes = recipes, reputation = rep })
-        else
-            cb(false)
-        end
+                        else
+                            cb(false)
+                        end
     end)
     
     -- Upgrade Still
@@ -1001,9 +1007,9 @@ AddEventHandler("Drugs:Server:Startup", function()
             -- Check cost
             local cost = _stillTiers[nextTier].upgradeCost
             if cost > 0 then
-                -- Check if player has enough money (using bank or cash)
-                local bankAccount = exports['sandbox-finance']:BankAccountGet(char:GetData("SID"), "checking")
-                if not bankAccount or bankAccount.balance < cost then
+                -- Check if player has enough money (using bank account)
+                local account = exports['sandbox-finance']:AccountsGetPersonal(char:GetData("SID"))
+                if not account or account.Balance < cost then
                     exports['sandbox-hud']:Notification(source, "error", 
                         string.format("Need $%d to upgrade", cost))
                     cb(false)
@@ -1011,7 +1017,11 @@ AddEventHandler("Drugs:Server:Startup", function()
                 end
                 
                 -- Deduct money
-                exports['sandbox-finance']:BankAccountRemove(char:GetData("SID"), "checking", cost, "Moonshine Still Upgrade")
+                exports['sandbox-finance']:BalanceWithdraw(account.Account, cost, {
+                    type = "moonshine_upgrade",
+                    title = "Moonshine Still Upgrade",
+                    description = "Moonshine Still Upgrade",
+                })
             end
             
             -- Update tier in database
@@ -1033,11 +1043,11 @@ AddEventHandler("Drugs:Server:Startup", function()
             local rep = GetMoonshineRep(source)
             
             if rep < _deliverySystem.minRep then
-                exports['sandbox-hud']:Notification(source, "error", 
+                        exports['sandbox-hud']:Notification(source, "error",
                     string.format("Need %d reputation for deliveries", _deliverySystem.minRep))
-                cb(false)
+                        cb(false)
                 return
-            end
+                    end
             
             -- Check if player has moonshine to deliver
             local sid = char:GetData("SID")
@@ -1048,19 +1058,25 @@ AddEventHandler("Drugs:Server:Startup", function()
                 return
             end
             
-            -- Generate delivery location
-            local playerCoords = GetEntityCoords(GetPlayerPed(source))
-            local angle = math.random() * 2 * math.pi
-            local distance = math.random(_deliverySystem.minDistance, _deliverySystem.maxDistance)
-            local deliveryCoords = vector3(
-                playerCoords.x + math.cos(angle) * distance,
-                playerCoords.y + math.sin(angle) * distance,
-                playerCoords.z
-            )
+            -- Generate delivery location (use random location from delivery locations if available)
+            local deliveryCoords
+            if _deliveryLocations and #_deliveryLocations > 0 then
+                deliveryCoords = _deliveryLocations[math.random(#_deliveryLocations)]
+            else
+                -- Fallback: generate random location near player
+                local playerCoords = GetEntityCoords(GetPlayerPed(source))
+                local angle = math.random() * 2 * math.pi
+                local distance = math.random(500, 2000) -- Default distance range
+                deliveryCoords = vector3(
+                    playerCoords.x + math.cos(angle) * distance,
+                    playerCoords.y + math.sin(angle) * distance,
+                    playerCoords.z
+                )
+            end
             
-            -- Calculate payment based on quality
+            -- Calculate payment based on quality (per jar)
             local quality = moonshine.Quality or 50
-            local payment = _deliverySystem.basePay + (quality * _deliverySystem.payPerQuality)
+            local payment = _deliverySystem.basePayPerJar + (quality * _deliverySystem.payPerQualityPerJar)
             
             local deliveryId = #_activeDeliveries + 1
             _activeDeliveries[deliveryId] = {
@@ -1080,9 +1096,9 @@ AddEventHandler("Drugs:Server:Startup", function()
                 payment = payment,
                 timeLimit = _deliverySystem.deliveryTimeLimit,
             })
-        else
-            cb(false)
-        end
+                else
+                    cb(false)
+                end
     end)
     
     -- Complete Delivery
@@ -1103,29 +1119,73 @@ AddEventHandler("Drugs:Server:Startup", function()
                 return
             end
             
-            -- Remove moonshine
-            local moonshine = exports.ox_inventory:ItemsGetFirst(delivery.sid, "moonshine", 1)
-            if moonshine and exports.ox_inventory:RemoveId(delivery.sid, 1, moonshine) then
-                -- Pay player
-                exports['sandbox-finance']:BankAccountAdd(delivery.sid, "checking", delivery.payment, "Moonshine Delivery")
+            -- Handle different delivery types
+            if delivery.type == "travel" then
+                -- Travel delivery - remove all moonshine items
+                local removed = true
+                for k, item in ipairs(delivery.moonshineItems or {}) do
+                    if not exports.ox_inventory:RemoveId(delivery.sid, 1, item) then
+                        removed = false
+                        break
+                    end
+                end
                 
-                -- Add reputation
-                AddMoonshineRep(source, _reputationSystem.repPerDelivery)
-                
-                exports['sandbox-hud']:Notification(source, "success", 
-                    string.format("Delivery Complete! +$%d | Reputation +%d", 
-                        delivery.payment, _reputationSystem.repPerDelivery))
-                
-                _activeDeliveries[data] = nil
-                cb(true)
+                if removed then
+                    -- Pay player
+                    local account = exports['sandbox-finance']:AccountsGetPersonal(delivery.sid)
+                    if account then
+                        exports['sandbox-finance']:BalanceDeposit(account.Account, delivery.payment, {
+                            type = "moonshine_delivery",
+                            title = "Moonshine Travel Delivery",
+                            description = "Moonshine Travel Delivery",
+                        })
+                    end
+                    
+                    -- Add reputation (base + bonus)
+                    local totalRep = _reputationSystem.repPerDelivery + _deliverySystem.travelRepBonus
+                    AddMoonshineRep(source, totalRep)
+                    
+                    exports['sandbox-hud']:Notification(source, "success", 
+                        string.format("Travel Delivery Complete! +$%d | Reputation +%d", 
+                            delivery.payment, totalRep))
+                    
+                    _activeDeliveries[data] = nil
+                    cb(true)
             else
                 cb(false)
+                end
+            else
+                -- Regular drop off - remove single moonshine
+                local moonshine = exports.ox_inventory:ItemsGetFirst(delivery.sid, "moonshine", 1)
+                if moonshine and exports.ox_inventory:RemoveId(delivery.sid, 1, moonshine) then
+                    -- Pay player
+                    local account = exports['sandbox-finance']:AccountsGetPersonal(delivery.sid)
+                    if account then
+                        exports['sandbox-finance']:BalanceDeposit(account.Account, delivery.payment, {
+                            type = "moonshine_delivery",
+                            title = "Moonshine Delivery",
+                            description = "Moonshine Delivery",
+                        })
+                    end
+                    
+                    -- Add reputation
+                    AddMoonshineRep(source, _reputationSystem.repPerDelivery)
+                    
+                    exports['sandbox-hud']:Notification(source, "success", 
+                        string.format("Delivery Complete! +$%d | Reputation +%d", 
+                            delivery.payment, _reputationSystem.repPerDelivery))
+                    
+                    _activeDeliveries[data] = nil
+                    cb(true)
+                else
+                    cb(false)
+                end
             end
         else
             cb(false)
         end
     end)
-    
+
     -- Get Reputation Info
     exports["sandbox-base"]:RegisterServerCallback("Drugs:Moonshine:GetReputation", function(source, data, cb)
         local char = exports['sandbox-characters']:FetchCharacterSource(source)
@@ -1139,4 +1199,421 @@ AddEventHandler("Drugs:Server:Startup", function()
             cb(false)
         end
     end)
+    
+    -- Dealer Menu: Get Available Options
+    exports["sandbox-base"]:RegisterServerCallback("Drugs:Moonshine:GetDealerOptions", function(source, data, cb)
+        local char = exports['sandbox-characters']:FetchCharacterSource(source)
+        if char then
+            local sid = char:GetData("SID")
+            local rep = GetMoonshineRep(source)
+            local isDevMode = _devMode or (exports["sandbox-base"]:GetEnvironment():upper() == "DEV")
+            
+            -- Check if player has moonshine
+            local moonshine = exports.ox_inventory:ItemsGetFirst(sid, "moonshine", 1)
+            if not moonshine then
+                exports['sandbox-hud']:Notification(source, "error", "You don't have any moonshine to sell")
+                cb(false)
+                return
+            end
+            
+            local options = {
+                dropOff = {
+                    available = isDevMode or rep >= _deliverySystem.minRep,
+                    label = "Drop Off",
+                    description = "Deliver moonshine to customer locations",
+                },
+                bulkSale = {
+                    available = isDevMode or rep >= _deliverySystem.bulkSaleRep,
+                    label = "Bulk Sale",
+                    description = string.format("Sell all moonshine at %d%% price (lazy way)", math.floor(_deliverySystem.bulkSaleMultiplier * 100)),
+                },
+                travel = {
+                    available = isDevMode or rep >= _deliverySystem.travelRep,
+                    label = "Travel to Cayo Perico",
+                    description = "Bulk delivery to Cayo Perico island (extra rewards)",
+                }
+            }
+            
+            cb(options)
+        else
+            cb(false)
+        end
+    end)
+    
+    -- Dealer Menu: Drop Off
+    exports["sandbox-base"]:RegisterServerCallback("Drugs:Moonshine:DealerDropOff", function(source, data, cb)
+        local char = exports['sandbox-characters']:FetchCharacterSource(source)
+        if char then
+            local isDevMode = _devMode or (exports["sandbox-base"]:GetEnvironment():upper() == "DEV")
+            local rep = GetMoonshineRep(source)
+            if not isDevMode and rep < _deliverySystem.minRep then
+                exports['sandbox-hud']:Notification(source, "error", 
+                    string.format("Need %d reputation for drop offs", _deliverySystem.minRep))
+                cb(false)
+                return
+            end
+            
+            local sid = char:GetData("SID")
+            local allMoonshine = exports.ox_inventory:ItemsGetAll(sid, "moonshine")
+            if not allMoonshine or #allMoonshine == 0 then
+                exports['sandbox-hud']:Notification(source, "error", "You don't have any moonshine")
+                cb(false)
+                return
+            end
+            
+            -- Count total jars
+            local totalJars = 0
+            for k, item in ipairs(allMoonshine) do
+                totalJars = totalJars + (item.count or 1)
+            end
+            
+            -- Generate multiple stops (3-6 stops)
+            local numStops = math.random(_deliverySystem.minStops, _deliverySystem.maxStops)
+            local stops = {}
+            local usedIndices = {}
+            
+            -- Pick unique random locations
+            for i = 1, numStops do
+                if totalJars <= 0 then
+                    break
+                end
+                
+                local locationIndex
+                local attempts = 0
+                repeat
+                    locationIndex = math.random(#_deliveryLocations)
+                    attempts = attempts + 1
+                until not usedIndices[locationIndex] or attempts > 50
+                
+                usedIndices[locationIndex] = true
+                local location = _deliveryLocations[locationIndex]
+                
+                -- Determine how many jars to sell at this stop (1-3)
+                local jarsAtStop = math.min(math.random(_deliverySystem.minJarsPerStop, _deliverySystem.maxJarsPerStop), totalJars)
+                totalJars = totalJars - jarsAtStop
+                
+                table.insert(stops, {
+                    coords = location,
+                    jars = jarsAtStop,
+                    completed = false,
+                })
+            end
+            
+            local deliveryId = #_activeDeliveries + 1
+            _activeDeliveries[deliveryId] = {
+                id = deliveryId,
+                source = source,
+                sid = sid,
+                stops = stops,
+                currentStop = 1,
+                totalPayment = 0,
+                startTime = os.time(),
+                expires = os.time() + _deliverySystem.deliveryTimeLimit,
+                type = "dropoff",
+                moonshineItems = allMoonshine,
+            }
+            
+            cb({
+                id = deliveryId,
+                stops = stops,
+                timeLimit = _deliverySystem.deliveryTimeLimit,
+            })
+        else
+            cb(false)
+        end
+    end)
+    
+    -- Sell Moonshine to Ped at Stop
+    exports["sandbox-base"]:RegisterServerCallback("Drugs:Moonshine:SellToPed", function(source, data, cb)
+        local char = exports['sandbox-characters']:FetchCharacterSource(source)
+        if char and data and data.deliveryId and data.stopIndex then
+            local delivery = _activeDeliveries[data.deliveryId]
+            if not delivery or delivery.source ~= source then
+                cb(false)
+                return
+            end
+            
+            if os.time() > delivery.expires then
+                exports['sandbox-hud']:Notification(source, "error", "Delivery expired!")
+                _activeDeliveries[data.deliveryId] = nil
+                cb(false)
+                return
+            end
+            
+            local stop = delivery.stops[data.stopIndex]
+            if not stop or stop.completed then
+                cb(false)
+                return
+            end
+            
+            local sid = char:GetData("SID")
+            local allMoonshine = exports.ox_inventory:ItemsGetAll(sid, "moonshine")
+            if not allMoonshine or #allMoonshine == 0 then
+                exports['sandbox-hud']:Notification(source, "error", "You don't have any moonshine")
+                cb(false)
+                return
+            end
+            
+            -- Remove jars (up to stop.jars) - calculate payment based on quality
+            local jarsToRemove = stop.jars
+            local totalPayment = 0
+            local removed = 0
+            
+            for k, item in ipairs(allMoonshine) do
+                if removed >= jarsToRemove then
+                    break
+                end
+                
+                local itemCount = item.count or 1
+                local toRemove = math.min(itemCount, jarsToRemove - removed)
+                local quality = item.Quality or 50
+                -- Use travel payment rates if this is a travel delivery, otherwise use drop-off rates
+                local basePay = (delivery.type == "travel") and _deliverySystem.travelBasePayPerJar or _deliverySystem.basePayPerJar
+                local payPerQuality = (delivery.type == "travel") and _deliverySystem.travelPayPerQualityPerJar or _deliverySystem.payPerQualityPerJar
+                local itemPayment = (basePay + (quality * payPerQuality)) * toRemove
+                
+                -- Remove items - if removing full stack, use RemoveId, otherwise use RemoveItem with slot
+                local success = false
+                if toRemove >= itemCount then
+                    -- Remove entire stack
+                    success = exports.ox_inventory:RemoveId(sid, 1, item)
+                else
+                    -- Remove partial - need to use slot-based removal
+                    if item.slot then
+                        success = exports.ox_inventory:RemoveItem(sid, "moonshine", toRemove, nil, item.slot)
+                    else
+                        -- Fallback: try removing with metadata match
+                        success = exports.ox_inventory:RemoveItem(sid, "moonshine", toRemove, item.metadata)
+                    end
+                end
+                
+                if success then
+                    totalPayment = totalPayment + itemPayment
+                    removed = removed + toRemove
+                end
+            end
+            
+            if removed > 0 then
+                delivery.totalPayment = delivery.totalPayment + totalPayment
+                stop.completed = true
+                
+                -- Add reputation per stop (3-5 for drop-off, 8-10 for travel)
+                local repGain
+                if delivery.type == "travel" then
+                    repGain = math.random(_deliverySystem.travelRepPerStop, _deliverySystem.travelRepPerStopMax)
+                else
+                    repGain = math.random(3, 5)
+                end
+                AddMoonshineRep(source, repGain)
+                
+                -- Check if all stops are done
+                local allDone = true
+                for k, s in ipairs(delivery.stops) do
+                    if not s.completed then
+                        allDone = false
+                        break
+                    end
+                end
+                
+                if allDone then
+                    -- Complete delivery - pay player
+                    local account = exports['sandbox-finance']:AccountsGetPersonal(sid)
+                    if account then
+                        local deliveryType = (delivery.type == "travel") and "Cayo Perico Delivery Route" or "Moonshine Delivery Route"
+                        exports['sandbox-finance']:BalanceDeposit(account.Account, math.floor(delivery.totalPayment), {
+                            type = "moonshine_delivery",
+                            title = deliveryType,
+                            description = deliveryType,
+                        })
+                    end
+                    
+                    exports['sandbox-hud']:Notification(source, "success", 
+                        string.format("Delivery Route Complete! +$%d", 
+                            math.floor(delivery.totalPayment)))
+                    
+                    _activeDeliveries[data.deliveryId] = nil
+                    cb({ completed = true, payment = math.floor(delivery.totalPayment), repGain = repGain })
+                else
+                    -- Move to next stop
+                    delivery.currentStop = delivery.currentStop + 1
+                    cb({ completed = false, nextStop = delivery.currentStop, nextCoords = delivery.stops[delivery.currentStop].coords, repGain = repGain })
+                end
+            else
+                cb(false)
+            end
+        else
+            cb(false)
+        end
+    end)
+
+    -- Dealer Menu: Bulk Sale
+    exports["sandbox-base"]:RegisterServerCallback("Drugs:Moonshine:DealerBulkSale", function(source, data, cb)
+        local char = exports['sandbox-characters']:FetchCharacterSource(source)
+        if char then
+            local isDevMode = _devMode or (exports["sandbox-base"]:GetEnvironment():upper() == "DEV")
+            local rep = GetMoonshineRep(source)
+            if not isDevMode and rep < _deliverySystem.bulkSaleRep then
+                exports['sandbox-hud']:Notification(source, "error", 
+                    string.format("Need %d reputation for bulk sales", _deliverySystem.bulkSaleRep))
+                cb(false)
+                return
+            end
+            
+            local sid = char:GetData("SID")
+            local allMoonshine = exports.ox_inventory:ItemsGetAll(sid, "moonshine")
+            
+            if not allMoonshine or #allMoonshine == 0 then
+                exports['sandbox-hud']:Notification(source, "error", "You don't have any moonshine")
+                cb(false)
+                return
+            end
+            
+            -- Calculate total payment (at reduced rate) - per jar pricing
+            local totalPayment = 0
+            local totalCount = 0
+            for k, item in ipairs(allMoonshine) do
+                local quality = item.Quality or 50
+                local itemCount = item.count or 1
+                -- Calculate payment per jar, then multiply by count and bulk sale multiplier
+                local paymentPerJar = _deliverySystem.basePayPerJar + (quality * _deliverySystem.payPerQualityPerJar)
+                local itemPayment = (paymentPerJar * itemCount) * _deliverySystem.bulkSaleMultiplier
+                totalPayment = totalPayment + itemPayment
+                totalCount = totalCount + itemCount
+            end
+            
+            -- Remove all moonshine
+            for k, item in ipairs(allMoonshine) do
+                exports.ox_inventory:RemoveId(sid, 1, item)
+            end
+            
+            -- Pay player
+            local account = exports['sandbox-finance']:AccountsGetPersonal(sid)
+            if account then
+                exports['sandbox-finance']:BalanceDeposit(account.Account, math.floor(totalPayment), {
+                    type = "moonshine_bulk_sale",
+                    title = "Moonshine Bulk Sale",
+                    description = "Moonshine Bulk Sale",
+                })
+            end
+            
+            exports['sandbox-hud']:Notification(source, "success", 
+                string.format("Sold %d moonshine for $%d (bulk sale)", totalCount, math.floor(totalPayment)))
+            
+            cb(true)
+        else
+            cb(false)
+        end
+    end)
+    
+    -- Dealer Menu: Travel to Cayo Perico
+    exports["sandbox-base"]:RegisterServerCallback("Drugs:Moonshine:DealerTravel", function(source, data, cb)
+        local char = exports['sandbox-characters']:FetchCharacterSource(source)
+        if char then
+            local isDevMode = _devMode or (exports["sandbox-base"]:GetEnvironment():upper() == "DEV")
+            local rep = GetMoonshineRep(source)
+            if not isDevMode and rep < _deliverySystem.travelRep then
+                exports['sandbox-hud']:Notification(source, "error", 
+                    string.format("Need %d reputation for travel deliveries", _deliverySystem.travelRep))
+                cb(false)
+                return
+            end
+            
+            local sid = char:GetData("SID")
+            local allMoonshine = exports.ox_inventory:ItemsGetAll(sid, "moonshine")
+            
+            if not allMoonshine or #allMoonshine == 0 then
+                exports['sandbox-hud']:Notification(source, "error", "You don't have any moonshine")
+                cb(false)
+                return
+            end
+            
+            -- Count total jars
+            local totalJars = 0
+            for k, item in ipairs(allMoonshine) do
+                totalJars = totalJars + (item.count or 1)
+            end
+            
+            if totalJars == 0 then
+                exports['sandbox-hud']:Notification(source, "error", "You don't have any moonshine")
+                cb(false)
+                return
+            end
+            
+            -- Generate multiple stops on Cayo Perico (like drop-off)
+            local numStops = math.random(_deliverySystem.travelMinStops, _deliverySystem.travelMaxStops)
+            local stops = {}
+            local usedLocations = {}
+            
+            for i = 1, numStops do
+                -- Pick a random unique location from Cayo Perico
+                local location
+                local attempts = 0
+                repeat
+                    location = _cayoPericoLocations[math.random(#_cayoPericoLocations)]
+                    attempts = attempts + 1
+                until not usedLocations[location] or attempts > 50
+                
+                usedLocations[location] = true
+                
+                -- Determine how many jars to sell at this stop (1-3)
+                local jarsAtStop = math.min(math.random(_deliverySystem.minJarsPerStop, _deliverySystem.maxJarsPerStop), totalJars)
+                totalJars = totalJars - jarsAtStop
+                
+                table.insert(stops, {
+                    coords = location,
+                    jars = jarsAtStop,
+                    completed = false,
+                })
+            end
+            
+            local deliveryId = #_activeDeliveries + 1
+            _activeDeliveries[deliveryId] = {
+                id = deliveryId,
+                source = source,
+                sid = sid,
+                stops = stops,
+                currentStop = 1,
+                totalPayment = 0,
+                startTime = os.time(),
+                expires = os.time() + _deliverySystem.travelTime,
+                type = "travel",
+                moonshineItems = allMoonshine,
+            }
+            
+            cb({
+                id = deliveryId,
+                stops = stops,
+                timeLimit = _deliverySystem.travelTime,
+            })
+        else
+            cb(false)
+        end
+    end)
 end)
+
+-- Test Command: Give Moonshine - REMOVE BEFORE DEPLOYMENT
+RegisterCommand("givemoonshine", function(source, args, rawCommand)
+    local char = exports['sandbox-characters']:FetchCharacterSource(source)
+    if char then
+        local count = tonumber(args[1]) or 5
+        local quality = tonumber(args[2]) or 75
+        local recipeId = args[3] or "classic"
+        
+        local recipe = GetRecipeById(recipeId)
+        local recipeLabel = recipe and recipe.label or "Classic Moonshine"
+        
+        local moonshineMetadata = {
+            Recipe = recipeId,
+            RecipeLabel = recipeLabel,
+            Quality = quality,
+        }
+        
+        local sid = char:GetData("SID")
+        if exports.ox_inventory:AddItem(sid, "moonshine", count, moonshineMetadata, 1, false, false, false, false, false, false, quality) then
+            exports['sandbox-hud']:Notification(source, "success", 
+                string.format("Gave %d %s (Quality: %d)", count, recipeLabel, quality))
+        else
+            exports['sandbox-hud']:Notification(source, "error", "Failed to add moonshine")
+        end
+    end
+end, false)

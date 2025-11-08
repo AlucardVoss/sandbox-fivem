@@ -211,12 +211,24 @@ _reputationSystem = {
 -- Delivery System
 _deliverySystem = {
     minRep = 100, -- Minimum reputation to unlock deliveries
-    basePay = 500, -- Base payment per delivery
-    payPerQuality = 10, -- Additional pay per quality point
-    maxDistance = 5000.0, -- Max delivery distance in meters
-    minDistance = 1000.0, -- Min delivery distance
-    deliveryTimeLimit = 60 * 15, -- 15 minutes to complete
+    basePayPerJar = 50, -- Base payment per jar (realistic economy)
+    payPerQualityPerJar = 1, -- Additional pay per quality point per jar
+    minJarsPerStop = 1, -- Minimum jars to sell per stop
+    maxJarsPerStop = 3, -- Maximum jars to sell per stop
+    minStops = 3, -- Minimum number of stops per delivery
+    maxStops = 6, -- Maximum number of stops per delivery
+    deliveryTimeLimit = 60 * 20, -- 20 minutes to complete entire delivery route
     policeChance = 0.10, -- 10% chance of police encounter
+    bulkSaleRep = 500, -- Reputation required for bulk sale option
+    bulkSaleMultiplier = 0.60, -- Only pay 60% of normal price (lazy way)
+    travelRep = 2000, -- Reputation required for travel option
+    travelBasePayPerJar = 150, -- Base payment per jar for Cayo Perico delivery (higher than drop-off)
+    travelPayPerQualityPerJar = 3, -- Additional pay per quality point per jar for travel
+    travelRepPerStop = 8, -- Reputation per stop (random between travelRepPerStop-10)
+    travelRepPerStopMax = 10, -- Max reputation per stop
+    travelMinStops = 4, -- Minimum number of stops on Cayo Perico
+    travelMaxStops = 7, -- Maximum number of stops on Cayo Perico
+    travelTime = 60 * 30, -- 30 minutes to complete travel delivery (longer due to island travel)
 }
 
 -- Aging System
@@ -236,4 +248,85 @@ _upgradeSystem = {
         [3] = 1000,
         [4] = 3000,
     }
+}
+
+-- Delivery Drop-Off Locations (Rough areas: bridges, hobo camps, some front doors)
+_deliveryLocations = {
+    -- Under bridges / rough areas
+    vector3(-1087.0, -1638.0, 4.4), -- Under bridge near beach
+    vector3(-1150.0, -1420.0, 4.9), -- Under bridge
+    vector3(-200.0, -1600.0, 31.0), -- Under highway bridge
+    vector3(100.0, -2000.0, 5.0), -- Under bridge near airport
+    vector3(500.0, -1800.0, 5.0), -- Under bridge
+    vector3(1200.0, -1400.0, 35.0), -- Under bridge near industrial
+    -- Hobo camps / alleyways
+    vector3(-1153.0, -1425.0, 4.9), -- Beach hobo camp
+    vector3(-47.0, -585.0, 37.9), -- Downtown alley
+    vector3(-128.0, -641.0, 168.8), -- Downtown alley
+    vector3(-187.0, -590.0, 167.0), -- Downtown alley
+    vector3(-255.0, -623.0, 33.0), -- Downtown alley
+    vector3(-340.0, -874.0, 31.0), -- Back alley
+    vector3(-379.0, -829.0, 31.6), -- Back alley
+    vector3(-442.0, -795.0, 30.7), -- Back alley
+    vector3(-468.0, -677.0, 32.7), -- Back alley
+    vector3(-598.0, -777.0, 25.1), -- Industrial area
+    vector3(-641.0, -801.0, 25.2), -- Industrial area
+    vector3(-680.0, -845.0, 23.0), -- Industrial area
+    vector3(-717.0, -879.0, 23.0), -- Industrial area
+    -- Some front doors (less common)
+    vector3(-1150.0, -1520.0, 4.3), -- Beach house
+    vector3(-1108.0, -1690.0, 4.3), -- Beach house
+    vector3(-1067.0, -1655.0, 4.4), -- Beach house
+    vector3(-1010.0, -1638.0, 4.9), -- Beach house
+    vector3(-974.0, -1108.0, 2.1), -- Beach house
+    vector3(-907.0, -979.0, 2.1), -- Beach house
+    vector3(-890.0, -853.0, 19.2), -- Beach house
+    vector3(-819.0, -696.0, 27.9), -- Beach house
+    vector3(-595.0, -1048.0, 22.3), -- Beach house
+    -- Sandy Shores rough areas
+    vector3(1961.0, 3740.0, 32.3), -- Sandy Shores
+    vector3(1392.0, 3604.0, 34.9), -- Sandy Shores
+    vector3(1193.0, 2703.0, 38.2), -- Sandy Shores
+    -- Paleto Bay rough areas
+    vector3(-448.0, 6017.0, 31.3), -- Paleto Bay
+    vector3(-247.0, 6331.0, 32.4), -- Paleto Bay
+    vector3(-175.0, 6428.0, 31.1), -- Paleto Bay
+}
+
+-- Cayo Perico Delivery Locations (island coordinates)
+_cayoPericoLocations = {
+    -- Main compound area
+    vector3(5000.0, -5750.0, 15.0), -- Near compound entrance
+    vector3(5020.0, -5700.0, 15.0), -- Compound area
+    vector3(5050.0, -5650.0, 15.0), -- Compound area
+    vector3(5100.0, -5600.0, 15.0), -- Compound area
+    -- Beach areas
+    vector3(4900.0, -5800.0, 2.0), -- Beach area
+    vector3(4850.0, -5750.0, 2.0), -- Beach area
+    vector3(4800.0, -5700.0, 2.0), -- Beach area
+    vector3(4750.0, -5650.0, 2.0), -- Beach area
+    -- Airstrip area
+    vector3(4500.0, -4550.0, 3.0), -- Airstrip
+    vector3(4550.0, -4500.0, 3.0), -- Airstrip area
+    vector3(4600.0, -4450.0, 3.0), -- Airstrip area
+    -- North dock area
+    vector3(5120.0, -4600.0, 2.0), -- North dock
+    vector3(5150.0, -4550.0, 2.0), -- North dock area
+    -- South dock area
+    vector3(5090.0, -4680.0, 2.0), -- South dock
+    vector3(5060.0, -4720.0, 2.0), -- South dock area
+    -- Main dock area
+    vector3(4840.0, -5174.0, 2.0), -- Main dock (spawn point)
+    vector3(4800.0, -5200.0, 2.0), -- Main dock area
+    vector3(4880.0, -5150.0, 2.0), -- Main dock area
+    -- Village area
+    vector3(5000.0, -5100.0, 2.0), -- Village
+    vector3(4950.0, -5050.0, 2.0), -- Village area
+    vector3(4900.0, -5000.0, 2.0), -- Village area
+    -- Radio tower area
+    vector3(5300.0, -5400.0, 40.0), -- Radio tower
+    vector3(5250.0, -5350.0, 35.0), -- Radio tower area
+    -- El Rubio's mansion area
+    vector3(5070.0, -5750.0, 20.0), -- Mansion area
+    vector3(5120.0, -5700.0, 20.0), -- Mansion area
 }

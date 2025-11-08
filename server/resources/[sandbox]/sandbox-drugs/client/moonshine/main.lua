@@ -846,3 +846,273 @@ RegisterCommand("moonshinedelivery", function()
         end
     end)
 end, false)
+
+-- Create Moonshine Dealer Ped
+RegisterNetEvent("Drugs:Client:Moonshine:CreateDealer", function(data)
+    -- Remove old vendor ped if it exists
+    exports['sandbox-pedinteraction']:Remove("MoonshineSeller")
+    
+    exports['sandbox-pedinteraction']:Add(data.id, data.model, data.coords, data.heading, 50.0, {
+        {
+            icon = "fas fa-handshake",
+            text = "Talk to Dealer",
+            minDist = 2.0,
+            onSelect = function()
+                TriggerEvent("Drugs:Client:Moonshine:OpenDealerMenu")
+            end,
+        },
+    }, "fas fa-handshake", data.scenario or false, nil, nil)
+end)
+
+-- Open Dealer Menu
+RegisterNetEvent("Drugs:Client:Moonshine:OpenDealerMenu", function()
+    exports["sandbox-base"]:ServerCallback("Drugs:Moonshine:GetDealerOptions", {}, function(options)
+        if not options then
+            return
+        end
+        
+        local menuItems = {}
+        
+        -- Drop Off option
+        if options.dropOff.available then
+            table.insert(menuItems, {
+                label = options.dropOff.label,
+                description = options.dropOff.description,
+                event = "Drugs:Client:Moonshine:DealerDropOff",
+                data = {},
+            })
+        else
+            table.insert(menuItems, {
+                label = options.dropOff.label .. " (Locked)",
+                description = string.format("Need %d reputation", _deliverySystem.minRep),
+                disabled = true,
+            })
+        end
+        
+        -- Bulk Sale option
+        if options.bulkSale.available then
+            table.insert(menuItems, {
+                label = options.bulkSale.label,
+                description = options.bulkSale.description,
+                event = "Drugs:Client:Moonshine:DealerBulkSale",
+                data = {},
+            })
+        else
+            table.insert(menuItems, {
+                label = options.bulkSale.label .. " (Locked)",
+                description = string.format("Need %d reputation", _deliverySystem.bulkSaleRep),
+                disabled = true,
+            })
+        end
+        
+        -- Travel option
+        if options.travel.available then
+            table.insert(menuItems, {
+                label = options.travel.label,
+                description = options.travel.description,
+                event = "Drugs:Client:Moonshine:DealerTravel",
+                data = {},
+            })
+        else
+            table.insert(menuItems, {
+                label = options.travel.label .. " (Locked)",
+                description = string.format("Need %d reputation", _deliverySystem.travelRep),
+                disabled = true,
+            })
+        end
+        
+        exports['sandbox-hud']:ListMenuShow({
+            main = {
+                label = "Moonshine Dealer",
+                items = menuItems
+            }
+        })
+    end)
+end)
+
+-- Handle Drop Off
+local _activeDeliveryPeds = {}
+local _currentDelivery = nil
+
+RegisterNetEvent("Drugs:Client:Moonshine:DealerDropOff", function()
+    exports["sandbox-base"]:ServerCallback("Drugs:Moonshine:DealerDropOff", {}, function(result)
+        if result and result.stops and #result.stops > 0 then
+            _currentDelivery = {
+                id = result.id,
+                stops = result.stops,
+                currentStop = 1,
+                timeLimit = result.timeLimit,
+            }
+            
+            -- Start first stop
+            TriggerEvent("Drugs:Client:Moonshine:GoToStop", 1)
+            
+            exports["sandbox-hud"]:Notification("success", 
+                string.format("Delivery route started! %d stops | Time limit: %d minutes", 
+                    #result.stops, math.floor(result.timeLimit / 60)))
+        else
+            exports["sandbox-hud"]:Notification("error", "Failed to start drop off")
+        end
+    end)
+end)
+
+-- Go to a specific stop
+RegisterNetEvent("Drugs:Client:Moonshine:GoToStop", function(stopIndex)
+    if not _currentDelivery or not _currentDelivery.stops[stopIndex] then
+        return
+    end
+    
+    local stop = _currentDelivery.stops[stopIndex]
+    
+    -- Create waypoint and blip
+    SetNewWaypoint(stop.coords.x, stop.coords.y)
+    local deliveryBlip = AddBlipForCoord(stop.coords.x, stop.coords.y, stop.coords.z)
+    SetBlipSprite(deliveryBlip, 1)
+    -- Use orange color for travel (Cayo Perico), blue for drop-off
+    local blipColor = (_currentDelivery.type == "travel") and 46 or 5
+    SetBlipColour(deliveryBlip, blipColor)
+    SetBlipRoute(deliveryBlip, true)
+    SetBlipRouteColour(deliveryBlip, blipColor)
+    BeginTextCommandSetBlipName("STRING")
+    local blipName = (_currentDelivery.type == "travel") and "Cayo Perico Delivery" or "Moonshine Delivery"
+    AddTextComponentString(string.format("%s (Stop %d/%d)", blipName, stopIndex, #_currentDelivery.stops))
+    EndTextCommandSetBlipName(deliveryBlip)
+    
+    -- Spawn ped at location
+    local pedModels = {`a_m_m_hillbilly_01`, `a_m_m_hillbilly_02`, `a_m_y_hippy_01`, `a_m_y_hipster_02`, `a_m_m_tramp_01`}
+    local pedModel = pedModels[math.random(#pedModels)]
+    
+    RequestModel(pedModel)
+    local timeout = 0
+    while not HasModelLoaded(pedModel) and timeout < 50 do
+        Wait(100)
+        timeout = timeout + 1
+    end
+    
+    if not HasModelLoaded(pedModel) then
+        exports["sandbox-hud"]:Notification("error", "Failed to load ped model")
+        return
+    end
+    
+    local ped = CreatePed(4, pedModel, stop.coords.x, stop.coords.y, stop.coords.z, 0.0, false, true)
+    SetEntityAsMissionEntity(ped, true, true)
+    FreezeEntityPosition(ped, true)
+    SetPedCanRagdoll(ped, false)
+    TaskSetBlockingOfNonTemporaryEvents(ped, 1)
+    SetBlockingOfNonTemporaryEvents(ped, 1)
+    SetPedFleeAttributes(ped, 0, 0)
+    SetPedCombatAttributes(ped, 17, 1)
+    SetEntityInvincible(ped, true)
+    SetPedDefaultComponentVariation(ped)
+    SetModelAsNoLongerNeeded(pedModel)
+    
+    -- Add target option
+    exports.ox_target:addLocalEntity(ped, {
+        {
+            name = "moonshine_sell_ped",
+            icon = "fas fa-handshake",
+            label = "Sell Moonshine",
+            distance = 2.0,
+            onSelect = function()
+                TriggerEvent("Drugs:Client:Moonshine:SellToPed", stopIndex)
+            end,
+        },
+    })
+    
+    _activeDeliveryPeds[stopIndex] = {
+        ped = ped,
+        blip = deliveryBlip,
+        model = pedModel,
+    }
+end)
+
+-- Sell to ped at stop
+RegisterNetEvent("Drugs:Client:Moonshine:SellToPed", function(stopIndex)
+    if not _currentDelivery then
+        return
+    end
+    
+    exports["sandbox-base"]:ServerCallback("Drugs:Moonshine:SellToPed", {
+        deliveryId = _currentDelivery.id,
+        stopIndex = stopIndex,
+    }, function(result)
+        if result then
+            local pedData = _activeDeliveryPeds[stopIndex]
+            if pedData and pedData.ped and DoesEntityExist(pedData.ped) then
+                -- Make ped a normal NPC - remove special flags
+                FreezeEntityPosition(pedData.ped, false)
+                SetEntityInvincible(pedData.ped, false)
+                SetPedCanRagdoll(pedData.ped, true)
+                SetBlockingOfNonTemporaryEvents(pedData.ped, false)
+                TaskSetBlockingOfNonTemporaryEvents(pedData.ped, 0)
+                
+                -- Make them wander away
+                TaskWanderStandard(pedData.ped, 10.0, 10)
+                
+                -- Remove target option (they're now a normal NPC, let them roam free)
+                exports.ox_target:removeLocalEntity(pedData.ped)
+                
+                -- Don't delete them - they're now part of the world and will despawn naturally
+            end
+            
+            -- Remove blip
+            if pedData and pedData.blip then
+                RemoveBlip(pedData.blip)
+            end
+            
+            _activeDeliveryPeds[stopIndex] = nil
+            
+            if result.completed then
+                -- All stops done
+                local deliveryType = _currentDelivery and _currentDelivery.type == "travel" and "Cayo Perico delivery" or "Delivery route"
+                exports["sandbox-hud"]:Notification("success", 
+                    string.format("%s complete! Total payment: $%d", deliveryType, result.payment))
+                _currentDelivery = nil
+            else
+                -- Move to next stop
+                local repMsg = result.repGain and string.format(" | Rep +%d", result.repGain) or ""
+                exports["sandbox-hud"]:Notification("info", 
+                    string.format("Stop %d complete! Moving to next stop...%s", stopIndex, repMsg))
+                Wait(2000)
+                TriggerEvent("Drugs:Client:Moonshine:GoToStop", result.nextStop)
+            end
+        else
+            exports["sandbox-hud"]:Notification("error", "Failed to sell moonshine")
+        end
+    end)
+end)
+
+-- Handle Bulk Sale
+RegisterNetEvent("Drugs:Client:Moonshine:DealerBulkSale", function()
+    exports["sandbox-base"]:ServerCallback("Drugs:Moonshine:DealerBulkSale", {}, function(success)
+        if success then
+            -- Already handled on server with notification
+        else
+            exports["sandbox-hud"]:Notification("error", "Failed to complete bulk sale")
+        end
+    end)
+end)
+
+-- Handle Travel (uses same system as drop-off but with Cayo Perico locations)
+RegisterNetEvent("Drugs:Client:Moonshine:DealerTravel", function()
+    exports["sandbox-base"]:ServerCallback("Drugs:Moonshine:DealerTravel", {}, function(result)
+        if result and result.stops and #result.stops > 0 then
+            _currentDelivery = {
+                id = result.id,
+                stops = result.stops,
+                currentStop = 1,
+                timeLimit = result.timeLimit,
+                type = "travel",
+            }
+            
+            -- Start first stop
+            TriggerEvent("Drugs:Client:Moonshine:GoToStop", 1)
+            
+            exports["sandbox-hud"]:Notification("success",
+                string.format("Cayo Perico delivery route started! %d stops | Time limit: %d minutes",
+                    #result.stops, math.floor(result.timeLimit / 60)))
+        else
+            exports["sandbox-hud"]:Notification("error", "Failed to start travel delivery")
+        end
+    end)
+end)
