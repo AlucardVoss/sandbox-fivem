@@ -231,7 +231,7 @@ AddEventHandler("Drugs:Server:Startup", function()
                 local md = slot.metadata or slot.MetaData or {}
                 if md.Still then
                     local stillData = exports['sandbox-drugs']:MoonshineStillGet(md.Still)
-                    if exports.ox_inventory:RemoveItem(char:GetData("SID"), "moonshine_still", 1, md) then
+                    if exports.ox_inventory:RemoveItem(source, "moonshine_still", 1, md) then
                         exports['sandbox-drugs']:MoonshineStillCreatePlaced(md.Still, char:GetData("SID"),
                             stillData.tier,
                             data.endCoords.coords, data.endCoords.rotation, stillData.created)
@@ -425,7 +425,7 @@ AddEventHandler("Drugs:Server:Startup", function()
             local slot = exports['sandbox-drugs']:GetPlacementData(source)
             if slot and (slot.name == "moonshine_barrel" or slot.Name == "moonshine_barrel") then
                 local md = slot.metadata or slot.MetaData or {}
-                if exports.ox_inventory:RemoveItem(char:GetData("SID"), "moonshine_barrel", 1, md) then
+                if exports.ox_inventory:RemoveItem(source, "moonshine_barrel", 1, md) then
                     exports['sandbox-drugs']:MoonshineBarrelCreatePlaced(char:GetData("SID"), data.endCoords.coords,
                         data.endCoords.rotation, os.time(), md.Brew)
                     exports['sandbox-drugs']:ClearPlacementData(source)
