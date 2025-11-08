@@ -55,7 +55,6 @@ AddEventHandler("Drugs:Client:Startup", function()
     exports["sandbox-base"]:RegisterClientCallback("Drugs:Meth:PlaceTable", function(data, cb)
         exports['sandbox-objects']:PlacerStart(`bkr_prop_meth_table01a`, "Drugs:Client:Meth:FinishPlacement", data, false)
         cb()
-        print("Placing Table", data)
     end)
 
     exports["sandbox-base"]:RegisterClientCallback("Drugs:Meth:Use", function(data, cb)
@@ -199,7 +198,6 @@ AddEventHandler("Drugs:Client:Meth:FinishPlacement", function(data, endCoords)
                 data = data,
                 endCoords = endCoords
             }, function(s)
-                print("Finished Placing Table", s)
                 -- if s then
                 --     local obj = CreateObject(`bkr_prop_meth_table01a`, endCoords.coords.x, endCoords.coords.y, endCoords.coords.z, true, true, false)
                 --     SetEntityHeading(obj, endCoords.rotation)
