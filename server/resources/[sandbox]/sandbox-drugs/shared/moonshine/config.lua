@@ -1,7 +1,7 @@
 -- Development Mode Configuration
 -- Dev mode is automatically enabled when sv_environment is set to "DEV"
 -- You can also manually enable it by setting _devMode = true
-_devMode = true -- Set to true to force dev mode (overrides environment check)
+_devMode = false -- Set to true to force dev mode (overrides environment check)
 _devCookTime = 30 -- Cook time in seconds when dev mode is enabled (default: 30 seconds)
 _devAgingTime = 30 -- Barrel aging time in seconds when dev mode is enabled (default: 30 seconds)
 
