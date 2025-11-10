@@ -341,9 +341,11 @@ CreateThread(function()
 		        if Config.DrawTextUIType == 'ox' then
 		            lib.showTextUI(ClosestDoor.state == 0 and lockDoor or unlockDoor)
 		        elseif Config.DrawTextUIType == 'sandbox' then
+					local actionText = ClosestDoor.state == 0 and lockDoor or unlockDoor
+					actionText = string.gsub(actionText, "^%[E%]%s*", "")
 		            exports['sandbox-hud']:ActionShow(
 		                "door_action",
-		                ClosestDoor.state == 0 and lockDoor or unlockDoor
+						"{keybind}primary_action{/keybind} " .. actionText
 		            )
 		        end
 		        showUI = ClosestDoor.state
