@@ -326,6 +326,7 @@ CREATE TABLE IF NOT EXISTS `characters` (
   `States` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
   `Callsign` varchar(255) DEFAULT NULL,
   `MDTHistory` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `Flags` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
   `Qualifications` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
   `LastClockOn` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
   `Salary` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
@@ -365,6 +366,7 @@ CREATE TABLE IF NOT EXISTS `characters` (
   CONSTRAINT `Animations` CHECK (json_valid(`Animations`)),
   CONSTRAINT `States` CHECK (json_valid(`States`)),
   CONSTRAINT `MDTHistory` CHECK (json_valid(`MDTHistory`)),
+  CONSTRAINT `Flags` CHECK (json_valid(`Flags`)),
   CONSTRAINT `Qualifications` CHECK (json_valid(`Qualifications`)),
   CONSTRAINT `LastClockOn` CHECK (json_valid(`LastClockOn`)),
   CONSTRAINT `Salary` CHECK (json_valid(`Salary`)),
@@ -379,7 +381,6 @@ CREATE TABLE IF NOT EXISTS `characters` (
   CONSTRAINT `CasinoChips` CHECK (json_valid(`CasinoChips`)),
   CONSTRAINT `LSUNDGInviter` CHECK (json_valid(`LSUNDGInviter`))
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
-
 
 DROP TABLE IF EXISTS `character_app_profiles`;
 CREATE TABLE IF NOT EXISTS `character_app_profiles` (
